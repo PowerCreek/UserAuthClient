@@ -1,0 +1,13 @@
+# Default ignored files
+/shelf/
+/workspace.xml
+# Rider ignored files
+/modules.xml
+/contentModel.xml
+/projectSettingsUpdater.xml
+/.idea.UserAuthClient.iml
+# Datasource local storage ignored files
+/../../../../../../../:\RiderProjects\ADO Projects\UserAuthClient\.idea\.idea.UserAuthClient\.idea/dataSources/
+/dataSources.local.xml
+# Editor-based HTTP Client requests
+/httpRequests/

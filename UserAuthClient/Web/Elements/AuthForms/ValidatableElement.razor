@@ -1,0 +1,60 @@
+﻿@using UserAuthClient.Web.Lib
+@inherits SourceElement
+
+@BuildRenderItem()
+
+@code {
+
+    [Parameter]
+    public ValidationOptions ValidationOptions { get; set; } = new();
+
+    public readonly string ValidatableContainer = IIdentity.CreateUUID;
+    public readonly string ValidationMessage = IIdentity.CreateUUID;
+    public readonly string ValidationInput = IIdentity.CreateUUID;
+
+    public string ValidationInputType { get; set; } = "";
+    
+    public TextElement TextComponent
+    {
+        get {
+            var hold = ElementRegistry.ChildMap[UUID].Single(e => ElementRegistry.ElementMap[e] is TextElement);
+            var textElement = ElementRegistry.ElementMap[hold] as TextElement;
+            return textElement;
+        }
+    }
+
+    private string Message { get; set; }
+    
+    public Action<string> OnMessageChange { get; set; } = (_) => { };
+    public Action<string> OnInputEnter { get; set; } = (_) => { };
+
+    public ValidatableElement()
+    {
+        OnMessageChange += s => { Message = s; }; 
+        
+        WithDecorator(nameof(ValidationInput), ValidationInput, ((Action<InputComponent>) (
+            (source) =>
+            {
+                source.Classes.Add("entry");
+                source.OnEnter += s=>OnInputEnter(s);
+            })),
+            label => @<InputComponent InputType=@ValidationInputType Parent=@this Tag=@label></InputComponent>,
+            ValidationOptions.DisplayInput);
+        
+        WithDecorator(nameof(ValidationMessage), ValidationMessage, ((Action<TextElement>) (
+            (source) =>
+            {
+                OnMessageChange += s => source.Text = s;
+                source.Text = Message;
+                source.Classes.Add("message");
+                source.StateChanged();
+            })),
+            label =>
+            {
+                return @<TextElement Parent=@this Tag=@label></TextElement>;
+            },
+                         
+            ValidationOptions.DisplayMessage);
+    }
+    
+}

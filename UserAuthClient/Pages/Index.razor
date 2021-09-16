@@ -1,0 +1,12 @@
+﻿@using UserAuthClient.Web.Elements.AuthForms
+@page "/"
+
+
+@RenderedItem
+
+@code{
+
+        public RenderFragment RenderedItem { get; set; } = 
+            @<AuthForm></AuthForm>;
+
+}

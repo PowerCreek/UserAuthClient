@@ -1,0 +1,126 @@
+﻿@using UserAuthClient.Web.Lib
+@using System.Reflection
+@implements UserAuthClient.Web.Lib.IIdentity
+
+@BuildRenderItem()
+
+@code {
+
+    [Inject]
+    public ElementRegistry ElementRegistry { get; set; }
+
+    public string UUID { get; set; } = IIdentity.CreateUUID;
+
+    [Parameter]
+    public string Tag { get; set; }
+
+    [Parameter]
+    public SourceElement Parent { get; set; }
+
+    [Parameter]
+    public virtual RenderFragment ChildContent { get; set; }
+
+    public List<RenderFragment> BuildStack { get; set; } = new();
+    
+    public Action OnComponentFinishedInit { get; set; } = () => { };
+
+    public virtual IEnumerable<RenderFragment> GetRenderItems()
+    {
+        List<RenderFragment> all = new(BuildStack);
+        all.Add(ChildContent);
+        return all;
+    }
+
+    public virtual RenderFragment BuildRenderItem(Func<RenderFragment> induce = null)
+    {
+        induce ??= () =>
+        {
+            return
+                @<div class=@string.Join(" ", Classes)
+                      style=@string.Join("; ", Styles.Select(e => $"{e.Key}: {e.Value}"))>
+                    @foreach (var renderItems in GetRenderItems())
+                    {
+                        @renderItems
+                    }
+                </div>;
+        };
+
+        BuildContent.Invoke();
+        return induce.Invoke();
+    }
+
+    public List<string> Classes { get; set; } = new();
+
+    public List<StyleItem> Styles { get; set; } = new();
+
+    public StyleItem SetStyle
+    {
+        set
+        {
+            Styles.RemoveAll(e => e.Key == value.Key);
+            Styles.Add(value);
+        }
+    }
+
+    public Action BuildContent { get; set; } = () => { };
+
+    public Dictionary<string, object> Properties { get; set; } = new Dictionary<string, object>();
+
+    public Dictionary<string, Action<SourceElement>> InitMap { get; set; } = new();
+
+    public void WhenInitialized<T>(string label, Action<T> act) where T : SourceElement => InitMap.TryAdd(label, (a) => act((T) a));
+
+    protected override void OnInitialized()
+    {
+        base.OnInitialized();
+        if (this.Tag is not null)
+        {
+            ElementRegistry.Register(Parent, this);
+            if (Parent is not null && Parent.InitMap.ContainsKey(this.Tag))
+            {
+                Parent.InitMap[this.Tag].Invoke(this);
+            }
+        }
+    }
+
+    public Action StateChanged => StateHasChanged;
+
+    public T Get<T>(string label)
+    {
+        With(label, out T item);
+        return item;
+    }
+
+    public SourceElement With<T>(string label, out T item)
+    {
+        if (!Properties.TryAdd(label, item = Activator.CreateInstance<T>()))
+            item = (T) Properties[label];
+        return this;
+    }
+
+    public void WithDecorator<T>(string label, string labelValue, Action<T> OnInitialize, Func<string, RenderFragment> Build, bool show) where T : SourceElement
+    {
+        if (!show) return;
+        WhenInitialized(labelValue, OnInitialize);
+
+        BuildContent += () =>
+        {
+            if (!Properties.TryAdd(label, labelValue)) return;
+            BuildStack.Add(Build(labelValue));
+        };
+    }
+
+    public Action InstantiateWith { get; set; } = () => { };
+
+    public static void GetComponent<T,Source>(Source source, string tag, out T item)
+        where T: SourceElement where Source: SourceElement 
+        =>item = (T) source.ElementRegistry.ElementMap[source.ElementRegistry.ChildMap[source.UUID].Single
+            (e => source.ElementRegistry.ElementMap[e] is T element && element.Tag.Equals(tag))];
+
+    protected override Task OnAfterRenderAsync(bool firstRender)
+    {
+        if(firstRender)OnComponentFinishedInit();
+        return base.OnAfterRenderAsync(firstRender);
+    }
+
+}

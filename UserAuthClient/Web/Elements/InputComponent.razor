@@ -1,0 +1,41 @@
+﻿@using UserAuthClient.Web.Lib
+@inherits SourceElement
+
+@BuildRenderItem()
+
+@code {
+
+    [Parameter]
+    public string InputType { get; set; } = "";
+    
+        private RenderFragment _ChildContent => @<input type=@InputType @bind="TextComponent.Text" @bind:event="oninput" @onkeydown="OnKeyPress" @onkeyup="OnKeyUp"/>;
+
+    [Parameter]
+    public override RenderFragment ChildContent
+    {
+        get => _ChildContent;
+        set{}
+    }
+    
+    public ComponentText TextComponent { get; set; } = new();
+    public Action<string> OnInput
+    {
+        get => TextComponent.OnTextChange;
+        set => TextComponent.OnTextChange += value;
+    }
+
+    public Action<string> OnEnter { get; set; } = (_) => { };
+
+    public Action<string> WhenKeyPressed { get; set; } = (_) => { };
+    
+    public void OnKeyPress(KeyboardEventArgs args)
+    {
+        if (args.Key == "Enter") OnEnter(TextComponent.Text);
+    }
+    
+    public void OnKeyUp(KeyboardEventArgs args)
+    {
+        WhenKeyPressed(TextComponent.Text);   
+    }
+
+}

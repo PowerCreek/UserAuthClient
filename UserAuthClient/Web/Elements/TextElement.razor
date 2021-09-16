@@ -1,0 +1,30 @@
+﻿@using UserAuthClient.Web.Lib
+@inherits SourceElement
+
+@BuildRenderItem()
+
+@code {
+    
+    [Parameter]
+    public override RenderFragment ChildContent
+    {
+        get => @<Text>@((MarkupString)TextComponent.Text)</Text>;
+        set => _ChildContent = value;
+    }
+    
+    private RenderFragment _ChildContent { get; set; }
+    
+    [Parameter]
+    public String Text
+    {
+        get => TextComponent.Text;
+        set => TextComponent.Text = value;
+    }
+
+    private ComponentText TextComponent { get; set; } = new();
+
+    public TextElement()
+    {
+        TextComponent.OnTextChange += (_) => StateChanged();
+    }
+}
