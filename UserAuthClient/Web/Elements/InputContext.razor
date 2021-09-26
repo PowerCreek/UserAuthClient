@@ -1,0 +1,69 @@
+﻿@using UserAuthClient.Web.Lib
+
+
+<!--BuildRenderItem()-->
+@* *@
+@* @foreach (var s in Stars) *@
+@* { *@
+@*     @s *@
+@* } *@
+
+@ChildContent
+
+@code {
+
+    public Action StateChanged => StateHasChanged;
+
+    protected override void OnParametersSet()
+    {
+        base.OnParametersSet();
+        
+        Capture?.Invoke(this);        
+    }
+
+    private List<string> Styles { get; set; } = new();
+
+    public string SetStyle
+    {
+        set { 
+            Styles.RemoveAll(e => e.StartsWith(value.Split(":")[0]));
+            Styles.Add(value);
+        }
+    }
+    
+    public List<string> Classes { get; set; } = new();
+
+    public Action<EventArgs> OnMouseDown = (EventArgs args) => { };
+    public Action<EventArgs> OnMouseOver = (EventArgs args) => { };
+    public Action<EventArgs> OnMouseLeave = (EventArgs args) => { };
+
+    public Action<EventArgs> DoMouseDown => args =>
+    {
+        OnMouseDown(args);
+    };
+    
+    public Action<EventArgs> DoMouseOver => args =>
+    {
+        OnMouseOver(args);
+    };
+    
+    public Action<EventArgs> DoMouseLeave => args =>
+    {
+        OnMouseLeave(args);
+    };
+    
+    [Parameter]
+    public Action<InputContext>  Capture { get; set; }
+
+    [Parameter]
+    public virtual RenderFragment ChildContent
+    {
+        get { return 
+            @<div class="@string.Join(" ", Classes)" style="@(string.Join("; ",Styles))"
+                onmousedown=@DoMouseDown 
+                onmousemove=@DoMouseOver
+                onmouseout=@DoMouseLeave
+            ></div>; }
+        set { }
+    }
+}

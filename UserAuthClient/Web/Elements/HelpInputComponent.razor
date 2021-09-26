@@ -1,0 +1,86 @@
+﻿
+@{
+    var hold = Stars;
+    
+    for (int i = 0; i < hold.Count; i++)
+    {
+        @(Stars[i])
+    }
+}
+
+
+@code {
+    
+    public void DoThingOnChoice(int choiceID)
+    {
+        Console.WriteLine($"User chose: {choiceID}");
+    }
+
+    public int thing = new Random().Next(200);
+    
+    int stickStar = -1;
+    int starHover = -1;
+
+    [Parameter]
+    public Action<int> OnSelection { get; set; }
+    
+    public List<RenderFragment> Stars 
+    {
+        get
+        {
+           
+            var hold = new List<RenderFragment>();
+
+            List<InputContext> contexts = new ();
+            
+            void ColorUpTo(int highest)
+            {
+                for (int i = 0; i < contexts.Count; i++)
+                {
+                    contexts[i].SetStyle = i <= highest ? "background-color: green" : "background-color: gray";
+                    contexts[i].StateChanged();
+                }
+            }
+            
+            for (int i = 0; i < 5; i++)
+            {
+                int captureId = i;
+
+                void OnInstanceCapture(InputContext context)
+                {
+                    contexts.Add(context);
+                    context.Classes.Add("star-fill");
+                    context.SetStyle = "background-color: gray";
+
+                    context.SetStyle = captureId <= starHover ? "background-color: green" : "background-color: gray";
+
+                    context.OnMouseDown += (args) =>
+                    {
+                        starHover = captureId;
+                        stickStar = captureId; 
+                        ColorUpTo(captureId);
+                        this.StateHasChanged();
+                        OnSelection(captureId);
+                    };
+
+                    context.OnMouseOver += (args) =>
+                    {
+                        starHover = captureId;
+                        ColorUpTo(captureId);
+                        this.StateHasChanged();
+                    };
+
+                    context.OnMouseLeave += (args) =>
+                    {
+                        starHover = -1;
+                        ColorUpTo(stickStar);
+                        this.StateHasChanged();
+                    };
+                }
+
+                hold.Add(@<InputContext Capture=@((Action<InputContext>) OnInstanceCapture)></InputContext>);
+            }
+            return hold; 
+        }
+    }
+}

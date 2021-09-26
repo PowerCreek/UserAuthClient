@@ -6,9 +6,11 @@
 
 @code {
 
+    
     [Inject]
     public ElementRegistry ElementRegistry { get; set; }
 
+    [Parameter]
     public string UUID { get; set; } = IIdentity.CreateUUID;
 
     [Parameter]
@@ -23,6 +25,30 @@
     public List<RenderFragment> BuildStack { get; set; } = new();
     
     public Action OnComponentFinishedInit { get; set; } = () => { };
+    
+    public List<string> Classes { get; set; } = new();
+
+    public List<StyleItem> Styles { get; set; } = new();
+    
+    public StyleItem SetStyle {set{ Styles.RemoveAll(e => e.Key == value.Key);Styles.Add(value); }}
+
+    public Action BuildContent { get; set; } = () => { };
+
+    public Dictionary<string, object> Properties { get; set; } = new Dictionary<string, object>();
+    
+    public Dictionary<string, object> ContextMap { get; set; } = new Dictionary<string, object>();
+
+    public Dictionary<string, Action<SourceElement>> InitMap { get; set; } = new();
+    
+    public Action InstantiateWith { get; set; } = () => { };
+
+    public Action StateChanged => StateHasChanged;
+    
+    protected override Task OnAfterRenderAsync(bool firstRender)
+    {
+        if(firstRender)OnComponentFinishedInit();
+        return base.OnAfterRenderAsync(firstRender);
+    }
 
     public virtual IEnumerable<RenderFragment> GetRenderItems()
     {
@@ -49,27 +75,22 @@
         return induce.Invoke();
     }
 
-    public List<string> Classes { get; set; } = new();
-
-    public List<StyleItem> Styles { get; set; } = new();
-
-    public StyleItem SetStyle
+    public void WithComponent<T>(string tag, string tagValue) where T: SourceContext
     {
-        set
+        if (!ContextMap.ContainsKey(tag))
         {
-            Styles.RemoveAll(e => e.Key == value.Key);
-            Styles.Add(value);
+            var GeneratedContext = Activator.CreateInstance(typeof(T), this, tag, tagValue);
+            ContextMap.TryAdd(tag, GeneratedContext);
         }
     }
 
-    public Action BuildContent { get; set; } = () => { };
+    public T GetContextByTag<T>(string tag) where T: SourceContext => (T) ContextMap[tag];
 
-    public Dictionary<string, object> Properties { get; set; } = new Dictionary<string, object>();
-
-    public Dictionary<string, Action<SourceElement>> InitMap { get; set; } = new();
-
-    public void WhenInitialized<T>(string label, Action<T> act) where T : SourceElement => InitMap.TryAdd(label, (a) => act((T) a));
-
+    public void WhenInitialized<T>(string label, Action<T> act) where T : SourceElement
+    {
+        InitMap.TryAdd(label, (a) => act((T) a));
+    }
+    
     protected override void OnInitialized()
     {
         base.OnInitialized();
@@ -82,22 +103,7 @@
             }
         }
     }
-
-    public Action StateChanged => StateHasChanged;
-
-    public T Get<T>(string label)
-    {
-        With(label, out T item);
-        return item;
-    }
-
-    public SourceElement With<T>(string label, out T item)
-    {
-        if (!Properties.TryAdd(label, item = Activator.CreateInstance<T>()))
-            item = (T) Properties[label];
-        return this;
-    }
-
+    
     public void WithDecorator<T>(string label, string labelValue, Action<T> OnInitialize, Func<string, RenderFragment> Build, bool show) where T : SourceElement
     {
         if (!show) return;
@@ -109,18 +115,10 @@
             BuildStack.Add(Build(labelValue));
         };
     }
-
-    public Action InstantiateWith { get; set; } = () => { };
-
-    public static void GetComponent<T,Source>(Source source, string tag, out T item)
+    
+    public static void GetComponent<T,Source>(Source source, string tagValue, out T item)
         where T: SourceElement where Source: SourceElement 
         =>item = (T) source.ElementRegistry.ElementMap[source.ElementRegistry.ChildMap[source.UUID].Single
-            (e => source.ElementRegistry.ElementMap[e] is T element && element.Tag.Equals(tag))];
-
-    protected override Task OnAfterRenderAsync(bool firstRender)
-    {
-        if(firstRender)OnComponentFinishedInit();
-        return base.OnAfterRenderAsync(firstRender);
-    }
+            (e => source.ElementRegistry.ElementMap[e] is T element && element.Tag.Equals(tagValue))];
 
 }

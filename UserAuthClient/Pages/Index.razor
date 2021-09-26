@@ -1,4 +1,6 @@
 ﻿@using UserAuthClient.Web.Elements.AuthForms
+@using UserAuthClient.Web.Elements
+@using UserAuthClient.Web.Lib
 @page "/"
 
 
@@ -6,7 +8,11 @@
 
 @code{
 
-        public RenderFragment RenderedItem { get; set; } = 
-            @<AuthForm></AuthForm>;
+    [Inject]
+    public SourceContext SourceContext { get; set; }
+
+    public RenderFragment RenderedItem { get; set; } =
+    @<AuthForm></AuthForm>;
+      //  @<HelpInputComponent></HelpInputComponent>;
 
 }

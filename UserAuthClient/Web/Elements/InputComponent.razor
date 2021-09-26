@@ -2,9 +2,16 @@
 @inherits SourceElement
 
 @BuildRenderItem()
+@* *@
+@* @foreach (var s in Stars) *@
+@* { *@
+@*     @s *@
+@* } *@
 
 @code {
 
+
+    
     [Parameter]
     public string InputType { get; set; } = "";
     

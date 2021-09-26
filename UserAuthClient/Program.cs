@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using UserAuthClient.Web.Elements;
 using UserAuthClient.Web.Lib;
 
 namespace UserAuthClient
@@ -19,6 +20,7 @@ namespace UserAuthClient
             builder.RootComponents.Add<App>("#app");
 
             builder.Services.AddSingleton<ElementRegistry>();
+            builder.Services.AddSingleton<SourceContext>();
             
             builder.Services.AddScoped(
                 sp => new HttpClient {BaseAddress = new Uri(builder.HostEnvironment.BaseAddress)});

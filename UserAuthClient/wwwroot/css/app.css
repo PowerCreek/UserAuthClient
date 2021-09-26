@@ -83,3 +83,10 @@ a, .btn-link {
 .authform .password{
 
 }
+
+.star-fill{
+    position: relative;
+    width: 30px;
+    height: 30px;
+    border-radius: 8px;
+}

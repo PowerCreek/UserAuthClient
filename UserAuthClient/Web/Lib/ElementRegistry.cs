@@ -6,6 +6,7 @@ namespace UserAuthClient.Web.Lib
 {
     public class ElementRegistry
     {
+        
         public Dictionary<string, object> ElementMap { get; set; } = new();
 
         public Dictionary<string, List<string>> ChildMap { get; set; } = new();
